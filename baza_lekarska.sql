@@ -17,12 +17,19 @@ create table leki(
     czy_na_recepte varchar2(1) check (czy_na_recepte in ('t','n')) not null
 );
 
+insert into leki(ID_leku,nazwa,postac,sklad,dawka,czy_refundowany,procent_refundacji,czy_na_recepte)
+values (1,'lklkl','zel','jablko',50,'n',null,'t');
+values (2,'lksdasdlkl','ggzel','jdsdablko',150,'n',null,'t');
+
 create table przepisane_leki(
     ID_wpisu number primary key,
     ID_leku number not null,
     ID_pacjenta number not null,
     data_przepisania date not null
 );
+
+insert into przepisane_leki(id_wpisu,id_leku,id_wizyty,ilosc)
+values (1,1,1,10);
 
 alter table przepisane_leki
 add constraint fk_przepis_lek foreign key (id_leku)
