@@ -71,7 +71,8 @@ create table baza_lekow(
     dawka varchar2(200) not null,
     czy_refundowany varchar2(1) check (czy_refundowany in ('t','n')) not null,
     procent_refundacji number(3) null,
-    czy_na_recepte varchar2(1) check (czy_na_recepte in ('t','n')) not null );
+    czy_na_recepte varchar2(1) check (czy_na_recepte in ('t','n')) not null ,
+    czy_aktualny varchar2(1) check (czy_aktualny in ('t','n')) not null);
     COMMENT ON TABLE baza_lekow IS 'Baza istniejących leków wraz z parametrami';
 
 /*  ### PRZEPISANE LEKI ### */
