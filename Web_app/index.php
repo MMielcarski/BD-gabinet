@@ -1,14 +1,21 @@
 
 <!DOCTYPE HTML>  
+<link href='https://fonts.googleapis.com/css?family=Work Sans' rel='stylesheet'>
 <html>
-<head>
+
 <style>
 .error {color: #FF0000;}
+body {
+  font-family: 'Work Sans';
+}
 </style>
-</head>
-<body>  
+
+
+<body style="background-color:#4db6ac;">  
 
 <?php
+
+include 'header.php';
 
 $hasloErr = $emailErr = $usrTypeErr = "";
 $haslo = $email = $usrType =  "";
@@ -54,30 +61,48 @@ function test_input($data)
 }
 ?>
 
-<h2>Witamy w bazie lekarskiej bd-Gabinet!</h2>
+<style>
+p {
 
-<!-- ---------- formularze danych uzytkownika --------------- -->
+}
+#login {
+  border-radius: 25px 0 0 25px;
+  background-color: #00867d;
+  margin: 10px;
+  padding: 10px;
+}
+#formLogin{
+  width: 15%;
+  text-align: right;
+}
+</style>
+<div id='login'>
+  <h2>Witamy w bazie lekarskiej bd-Gabinet!</h2>
 
-<p><span class="error">* wymagane</span></p>
-<form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">  
+  <!-- ---------- formularze danych uzytkownika --------------- -->
 
-  E-mail: <input type="text" name="email" value="<?php echo $email;?>">
-  <span class="error">* <?php echo $emailErr;?></span>
-  <br><br>
+  <p><span class="error">* wymagane</span></p>
+  <div id='formLogin'>
+    <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">  
 
-  haslo: <input type="password" name="haslo" value="<?php echo $haslo;?>">
-  <span class="error">* <?php echo $hasloErr;?></span>
-  <br><br>
+      E-mail: <input type="text" name="email" value="<?php echo $email;?>">
+      <span class="error">* <?php echo $emailErr;?></span>
+      <br><br>
 
-  uzytkownik:
-  <input type="radio" name="usrType" <?php if (isset($usrType) && $usrType=="pacjenci") echo "checked";?> value="pacjenci">Pacjent
-  <input type="radio" name="usrType" <?php if (isset($usrType) && $usrType=="lekarze") echo "checked";?> value="lekarze">Lekarz
-  <span class="error">* <?php echo $usrTypeErr;?></span>
-  <br><br>
+      haslo: <input type="password" name="haslo" value="<?php echo $haslo;?>">
+      <span class="error">* <?php echo $hasloErr;?></span>
+      <br><br>
 
-  <input type="submit" name="submit" value="Zaloguj">  
+      <input type="radio" name="usrType" <?php if (isset($usrType) && $usrType=="pacjenci") echo "checked";?> value="pacjenci">Pacjent
+      <input type="radio" name="usrType" <?php if (isset($usrType) && $usrType=="lekarze") echo "checked";?> value="lekarze">Lekarz
+      <span class="error">* <?php echo $usrTypeErr;?></span>
+      <br><br>
 
-</form>
+      <input type="submit" name="submit" value="Zaloguj">  
+
+    </form>
+  </div>
+</div>
 <!-- --------------------------------------------------------- -->
 
 
@@ -89,7 +114,7 @@ if (isset($_POST['submit']))
 {
   try { $bdd = new PDO('mysql:host=db4free.net;dbname=dbgabinet', 'root00', 'Mzyk9ftw'); } 
   catch (Exception $e) { exit('Unable to connect to database.'); }
-  $result = $bdd->query($requestPass) or die(print_r($bdd->errorInfo()));
+  $result = $bd->query($requestPass) or die(print_r($bdd->errorInfo()));
 
 }
 $userData = $result->fetch(PDO::FETCH_ASSOC); // tablica rekordu uzytkownika
@@ -114,6 +139,20 @@ else if($usrType == 'lekarze')
 /* ----------------- end ------------------------- */ 
 
   $userID_string = $usrSymbol.(string)$usrID;
+
+  $cookie_name = "user";
+  if(!isset($_COOKIE[$cookie_name])) {
+      echo "Cookie named " . $cookie_name . " is not set!";
+  
+      
+      $cookie_value = $userID_string;
+      setcookie($cookie_name, $cookie_value, time() + (86400 * 30), "/"); // 86400 = 1 day
+  } else {
+      echo "Cookie '" . $cookie_name . "' is set!<br>";
+      echo "Value is: " . $_COOKIE[$cookie_name];
+  }
+  
+
   header ('Location: fullcalendar-master/index.php?userID_string='.$userID_string); 
 }
 else
@@ -123,6 +162,8 @@ else
 
 ?>
 
+<head>
+</head>
 
-
+</html>
 
