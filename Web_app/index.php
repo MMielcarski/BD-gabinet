@@ -108,16 +108,18 @@ p {
 
 <?php
 // ------------------- requesty SQL ----------------------------- //
-$json = array();
-$requestPass = "SELECT * FROM $usrType WHERE adres_email='$email'"; // rekord pacjenta/lekarza szukany po email
-if (isset($_POST['submit']))
+
+//if (isset($_POST['submit']))
+
+if(!$_GET['userID_string'])
 {
+  $json = array();
+  $requestPass = "SELECT * FROM $usrType WHERE adres_email='$email'"; // rekord pacjenta/lekarza szukany po email
   try { $bdd = new PDO('mysql:host=db4free.net;dbname=dbgabinet', 'root00', 'Mzyk9ftw'); } 
   catch (Exception $e) { exit('Unable to connect to database.'); }
   $result = $bd->query($requestPass) or die(print_r($bdd->errorInfo()));
+  $userData = $result->fetch(PDO::FETCH_ASSOC); // tablica rekordu uzytkownika  
 
-}
-$userData = $result->fetch(PDO::FETCH_ASSOC); // tablica rekordu uzytkownika
 
 if($haslo == $userData['haslo'] )
 {
@@ -146,8 +148,9 @@ else if($usrType == 'lekarze')
   
       
       $cookie_value = $userID_string;
-      setcookie($cookie_name, $cookie_value, time() + (86400 * 30), "/"); // 86400 = 1 day
-  } else {
+      //setcookie($cookie_name, $cookie_value, time() + (86400 * 30), "/"); // 86400 = 1 day
+      setcookie($cookie_name, $cookie_value, time() + (100), "/"); // 86400 = 1 day
+    } else {
       echo "Cookie '" . $cookie_name . "' is set!<br>";
       echo "Value is: " . $_COOKIE[$cookie_name];
   }
@@ -158,6 +161,7 @@ else if($usrType == 'lekarze')
 else
 {
   echo "Błędny adres e-mail lub hasło!";
+}
 }
 
 ?>

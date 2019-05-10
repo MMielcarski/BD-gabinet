@@ -136,7 +136,8 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
 
         start: '10:00',         // a start time (10am in this example)
         end: '18:00',           // an end time (6pm in this example)
-      },
+      }, 
+      selectConstraint:'businessHours',
 
         editable: false,
         header: {
@@ -156,14 +157,17 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
             event.allDay = false;
           }
         },
-        selectable: false,
-        selectHelper: false,
+        selectable: true,                       // dodawanie eventow w kalendarzu 
+        selectHelper: true,
         select: function (start, end, allDay) {
-          var title = prompt('Event Title:');
-          var badanie = prompt('Badanie:');
+          var title = confirm('Dodać nową wizytę?');
           if (title) {
             var start = fmt(start);
             var end = fmt(end);
+            
+            document.getElementById("AddEventDate").value = start.substr(0,start.length - 6);
+            document.getElementById("AddEventTime").value = start.substr(11,start.length);
+
             $.ajax({
               url: 'add_events.php',
               data: 'title=' + title + '&start=' + start + '&end=' + end,
@@ -254,25 +258,47 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
 <style type="text/css">
 * {margin: 0; padding: 0;}
 #container {height: 100%; width:80%; font-size: 0; margin: auto;}
-#left-menu, #calendar, #right-menu {display: inline-block; *display: inline; zoom: 1; vertical-align: top; font-size: 12px; }
-#left-menu {width: 25%; background: blue;}
+#left-menu, #calendar, #right-menu {display: inline-block; *display: inline; zoom: 1; vertical-align: top; font-size: 12px; background: #81e8dd; border-radius: 5px;}
+#left-menu {width: 25%; }
 #calendar {width: 50%;background-color: white;}
-#right-menu {width: 25%; background: #81e8dd;border-radius: 5px;}
+#right-menu {width: 25%; }
 
 #menuBlock {display: block; padding: 10pt; margin: 10px; background: #00857c;border-radius: 25px;}
 </style>
 
 <div id="container">
-    <div id="left-menu"></div>
-    <div id="calendar"></div>
+  <!-- -------------------------- left menu -------------------------- -->
+    <div id="left-menu">
+      <div id="menuBlock">
+      <p>Wypełnij formularz wizyty:</p><br>
+      
+      <form>
+        <label for="AddEventDate">Data wizyty:</label>
+        <input type="date" id="AddEventDate" name="trip-start"
+        value="2018-07-22"
+        min="2018-01-01" max="2020-12-31"><br><br>
 
+        <label for="AddEventTime">Godzina wizyty:</label>
+        <input type="time" id="AddEventTime" name="eta"> <br>
+      
+        <br>Cel wizyty:<br>
+        <input type="text" name="firstname" id="test1"><br><br>
+        
+        <button type="submit">todo_Zarejestruj wizytę</button>
+      </form>
+
+      </div>
+    </div>
+  <!-- -------------------------- calendar -------------------------- -->
+    <div id="calendar"></div>
+  <!-- -------------------------- right menu -------------------------- -->
     <div id="right-menu"> 
       <div id="menuBlock">
         <?php
         if($usrSymbol == 'P')
         {
           echo "Zalogowano jako Pacjent<br>";
-          echo "Identyfikator: ".$usrID."<br>";
+          echo "ID: ".$usrID."<br>";
         }
         else if($usrSymbol == 'L')
         {
@@ -281,6 +307,15 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
         }
         else echo "Bledny typ uzytkownika!";
         ?>
+
+        <form action="../index.php">
+        <input type="submit" value="Wyloguj">
+        </form>
+
+        <form action="../pass_change.php">
+        <input type="submit" value="todo_Zmień hasło">
+        </form>
+
       </div>
 
       <div id="menuBlock">
@@ -308,7 +343,7 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
 <head>  <!-- reklama CBA -->
 </head>
 
-<body style="background-color:#4db6ac;">
+<body style="background-color:#d8e5ff;">
 
 
 
