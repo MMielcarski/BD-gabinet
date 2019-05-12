@@ -6,7 +6,7 @@
 // marek_psychiatra@re.com
 // admin1
 
-// ------------- pobieranie danych uzytkownika --------------- //
+// ------------- SELECT danych uzytkownika --------------- //
 
 //$usr_string=$_GET['userID_string'];     // zmienna ID uzytkownika pobierana ze strony logowania (string "symbol+ID")
 $cookie_name = "user";
@@ -48,16 +48,20 @@ else  echo "User Type Error!<br>";
 $event_data_raw = array();
 for ($i = 0; $i < count($events_array); $i++)   // tworzy tablice z eventami w standardzie fullCalendar
 {
+  $datetimeP = new DateTime($events_array[$i]['data']);
+  $datetimeP->modify('+1 hour');
+
   $tmp = array(
     "id" => $events_array[$i]['ID_WIZYTY'], 
     "title" => $events_array[$i]['wywiad'], 
     "start" => $events_array[$i]['data'], 
-    "end" => $events_array[$i]['data']);
+    //"end" => $events_array[$i]['data']);
+    "end" => $datetimeP->format('Y-m-d H:i:s'));
   array_push($event_data_raw,$tmp);
 }
-// ------------- pobieranie danych uzytkownika END --------------- //
+// ------------- SELECT danych uzytkownika END --------------- //
 
-// ------------- pobieranie wizyt wybranego lekarza -------------- //
+// ------------- SELECT wizyt wybranego lekarza -------------- //
 
 if($_GET['lekarze'])  // jezeli wybrany lekarz (w url)
 {
@@ -81,24 +85,48 @@ if($_GET['lekarze'])  // jezeli wybrany lekarz (w url)
 
   for ($i = 0; $i < count($events_array_sel); $i++)   // tworzy tablice z eventami w standardzie fullCalendar
   {
+    $datetimeL = new DateTime($events_array_sel[$i]['data']);
+    $datetimeL->modify('+1 hour');
+
     $tmp_sel = array(
       "id" => $events_array_sel[$i]['ID_WIZYTY'], 
       //"title" => "wizyta lekarza: ".$doctors_list_array[$k]['nazwisko'], 
       "title" => "",
       "start" => $events_array_sel[$i]['data'], 
-      "end" => $events_array_sel[$i]['data'],
+      //"end" => $events_array_sel[$i]['data'],
+      "end" => $datetimeL->format('Y-m-d H:i:s'),
       "color" => 'purple');
     array_push($event_data_raw,$tmp_sel);
   }
 }
-// ------------- pobieranie wizyt wybranego lekarza END -------------- //
+// ------------- SELECT wizyt wybranego lekarza END -------------- //
 
 
-// ------------- pobieranie danych lekarzy --------------- //
+// ------------- SELECT danych lekarzy --------------- //
 $requestDoctorsList = "SELECT * FROM lekarze" ;  
 $doctors_list_query = $bdd->query($requestDoctorsList) or die(print_r($bdd->errorInfo()));       
 $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC); 
-// ------------- pobieranie danych lekarzy END --------------- //
+// ------------- SELECT danych lekarzy END --------------- //
+
+
+// ------------- INSERT request wizyty --------------- //
+if($_GET['eventDate'])  // jezeli wybrany lekarz (w url)
+{
+  $title = $_GET['eventCel'];
+  $start_date = $_GET['eventDate'];
+  $start_time = $_GET['eventTime'];
+
+  $start = $start_date." ".$start_time;
+  $datetimetmp = new DateTime();
+  $datetimetmp = date_create_from_format('Y-m-d H:i:s', $start_date." ".$start_time.":00");
+  $datetimetmp->modify('+1 hour');
+  $end = $datetimetmp->format('Y-m-d H:i:s');
+
+  $sql = "INSERT INTO events (title, start_event, end_event) VALUES (:title, :start, :end )";
+  $q = $bdd->prepare($sql);
+  $q->execute(array(':title' => $title, ':start' => $start, ':end' => $end));
+}
+// ------------- INSERT request wizyty END --------------- //
 
 ?>
 <!-- ----------- Kalendarz  ----------------->
@@ -140,6 +168,7 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
       selectConstraint:'businessHours',
 
         editable: false,
+        //eventDurationEditable : false,
         header: {
           left: 'prev,next today',
           center: 'title',
@@ -163,8 +192,12 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
           var title = confirm('Dodać nową wizytę?');
           if (title) {
             var start = fmt(start);
-            var end = fmt(end);
-            
+            //var end = fmt(end);
+            var end = start;
+            //var datetimeN = new DateTime(start);
+            //end.setHours( end.getHours() + 1 );
+            //var end = datetimeN;
+
             document.getElementById("AddEventDate").value = start.substr(0,start.length - 6);
             document.getElementById("AddEventTime").value = start.substr(11,start.length);
 
@@ -181,7 +214,7 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
                   title: title,
                   start: start,
                   end: end,
-                  allDay: allDay
+                  allDay: false
                 },
                 true // make the event "stick"
             );
@@ -257,32 +290,32 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
 
 <style type="text/css">
 * {margin: 0; padding: 0;}
-#container {height: 100%; width:80%; font-size: 0; margin: auto;}
-#left-menu, #calendar, #right-menu {display: inline-block; *display: inline; zoom: 1; vertical-align: top; font-size: 12px; background: #81e8dd; border-radius: 5px;}
+#container {height: 80%; width:100%; font-size: 0; margin: auto;}
+#left-menu, #calendar, #right-menu {margin: 10px; display: inline-block; *display: inline; zoom: 1; vertical-align: top; font-size: 12px; background: #81e8dd; border-radius: 5px;}
 #left-menu {width: 25%; }
-#calendar {width: 50%;background-color: white;}
+#calendar {width: 40%;background-color: white;}
 #right-menu {width: 25%; }
 
-#menuBlock {display: block; padding: 10pt; margin: 10px; background: #00857c;border-radius: 25px;}
+#menuBlock {display: block; padding: 10pt; margin: 10px; background: #00857c;border-radius: 13px;}
 </style>
 
 <div id="container">
   <!-- -------------------------- left menu -------------------------- -->
     <div id="left-menu">
       <div id="menuBlock">
-      <p>Wypełnij formularz wizyty:</p><br>
+      <p><b>Wypełnij formularz wizyty:</b></p><br>
       
       <form>
         <label for="AddEventDate">Data wizyty:</label>
-        <input type="date" id="AddEventDate" name="trip-start"
+        <input type="date" id="AddEventDate" name="eventDate"
         value="2018-07-22"
         min="2018-01-01" max="2020-12-31"><br><br>
 
         <label for="AddEventTime">Godzina wizyty:</label>
-        <input type="time" id="AddEventTime" name="eta"> <br>
+        <input type="time" id="AddEventTime" name="eventTime"> <br>
       
         <br>Cel wizyty:<br>
-        <input type="text" name="firstname" id="test1"><br><br>
+        <input type="text" id="AddEventCel" name="eventCel" id="test1"><br><br>
         
         <button type="submit">todo_Zarejestruj wizytę</button>
       </form>
@@ -294,6 +327,7 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
   <!-- -------------------------- right menu -------------------------- -->
     <div id="right-menu"> 
       <div id="menuBlock">
+        <b>
         <?php
         if($usrSymbol == 'P')
         {
@@ -307,6 +341,7 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
         }
         else echo "Bledny typ uzytkownika!";
         ?>
+        </b>
 
         <form action="../index.php">
         <input type="submit" value="Wyloguj">
@@ -319,7 +354,7 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
       </div>
 
       <div id="menuBlock">
-      <p>Wybierz lekarza:</p><br>
+      <p><b>Wybierz lekarza:</b></p><br>
 
         <form id="lista-lekarzy">
 
@@ -336,6 +371,7 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
         </form><br>
 
         <p id="selected_doctor_id"></p>
+
       </div>
     </div>
 </div>
