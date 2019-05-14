@@ -15,7 +15,6 @@ $usr_string = $_COOKIE[$cookie_name];
 $usrSymbol = $usr_string[0];            // odczytanie symbolu użytkownika 
 $usrID = (int)substr($usr_string,1);    // odczytanie ID uzytkownika
 
-
 try { $bdd = new PDO('mysql:host=db4free.net;dbname=dbgabinet', 'root00', 'Mzyk9ftw'); }    // laczenie z baza danych
 catch (Exception $e) { exit('Unable to connect to database.'); }                            // blad polaczenia z baza danych
 
@@ -53,7 +52,7 @@ for ($i = 0; $i < count($events_array); $i++)   // tworzy tablice z eventami w s
 
   $tmp = array(
     "id" => $events_array[$i]['ID_WIZYTY'], 
-    "title" => $events_array[$i]['wywiad'], 
+    "title" => $events_array[$i]['cel_wizyty'], 
     "start" => $events_array[$i]['data'], 
     //"end" => $events_array[$i]['data']);
     "end" => $datetimeP->format('Y-m-d H:i:s'));
@@ -91,7 +90,7 @@ if($_GET['lekarze'])  // jezeli wybrany lekarz (w url)
     $tmp_sel = array(
       "id" => $events_array_sel[$i]['ID_WIZYTY'], 
       //"title" => "wizyta lekarza: ".$doctors_list_array[$k]['nazwisko'], 
-      "title" => "",
+      "title" => $events_array_sel[$i]['cel_wizyty'],
       "start" => $events_array_sel[$i]['data'], 
       //"end" => $events_array_sel[$i]['data'],
       "end" => $datetimeL->format('Y-m-d H:i:s'),
@@ -122,14 +121,21 @@ if($_GET['eventDate'])  // jezeli wybrany lekarz (w url)
   $datetimetmp->modify('+1 hour');
   $end = $datetimetmp->format('Y-m-d H:i:s');
 
-  $sql = "INSERT INTO events (title, start_event, end_event) VALUES (:title, :start, :end )";
+  $sql = "INSERT INTO wizyty (ID_PACJENTA, data , cel_wizyty) VALUES (:usrID, :start, :title )";
   $q = $bdd->prepare($sql);
-  $q->execute(array(':title' => $title, ':start' => $start, ':end' => $end));
+  $q->execute(array(':usrID' => $usrID, ':start' => $start, ':title' => $title));
 }
 // ------------- INSERT request wizyty END --------------- //
-
 ?>
+
 <!-- ----------- Kalendarz  ----------------->
+
+<!--
+<input type="text" id="test2" name="bla" >
+<script>
+document.getElementById("test2").value = "445";
+document.getElementById("test2").value = end;
+</script> -->
 
 <!DOCTYPE html>
 <html>
@@ -144,7 +150,7 @@ if($_GET['eventDate'])  // jezeli wybrany lekarz (w url)
   <script src='./lib/moment.min.js'></script>
   <script src='./lib/jquery-ui.custom.min.js'></script>
   <script src='./lib/fullcalendar.min.js'></script>
-  <script>
+  <script type="text/javascript">
 
     $(document).ready(function () {
       function fmt(date) {
@@ -165,19 +171,26 @@ if($_GET['eventDate'])  // jezeli wybrany lekarz (w url)
         start: '10:00',         // a start time (10am in this example)
         end: '18:00',           // an end time (6pm in this example)
       }, 
+      // ----------------- OPTIONS ------------------- //
       selectConstraint:'businessHours',
+      editable: false,
+      events: <?php echo json_encode($event_data_raw); ?>,
+      selectable: true,                        
+      selectHelper: true,
+      defaultView: 'month',
+      eventOverlap: false,
+      selectOverlap: false,
+      slotEventOverlap: false,
+      eventDurationEditable : false,
+      eventStartEditable: false,      // not working
+      // ----------------- OPTIONS END ------------------- //
 
-        editable: false,
-        //eventDurationEditable : false,
         header: {
           left: 'prev,next today',
           center: 'title',
           right: 'month,agendaWeek,agendaDay'
         },
-        
-        //events: "events.php",
-        events: <?php echo json_encode($event_data_raw); ?>, 
-
+      
         // Convert the allDay from string to boolean
         eventRender: function (event, element, view) {
           if (event.allDay === 'true') {
@@ -186,85 +199,55 @@ if($_GET['eventDate'])  // jezeli wybrany lekarz (w url)
             event.allDay = false;
           }
         },
-        selectable: true,                       // dodawanie eventow w kalendarzu 
-        selectHelper: true,
-        select: function (start, end, allDay) {
-          var title = confirm('Dodać nową wizytę?');
-          if (title) {
-            var start = fmt(start);
-            //var end = fmt(end);
-            var end = start;
-            //var datetimeN = new DateTime(start);
-            //end.setHours( end.getHours() + 1 );
-            //var end = datetimeN;
 
-            document.getElementById("AddEventDate").value = start.substr(0,start.length - 6);
-            document.getElementById("AddEventTime").value = start.substr(11,start.length);
+        select: function (start, end, allDay) {               // add new event
 
-            $.ajax({
-              url: 'add_events.php',
-              data: 'title=' + title + '&start=' + start + '&end=' + end,
-              type: "POST",
-              success: function (json) {
-                //alert('Added Successfully');
-              }
-            });
-            calendar.fullCalendar('renderEvent',
-                {
-                  title: title,
-                  start: start,
-                  end: end,
-                  allDay: false
-                },
-                true // make the event "stick"
-            );
-          }
-          calendar.fullCalendar('unselect');
+            var title = confirm('Dodać nową wizytę?');
+            if (title) {
+              title = "nowa wizyta";
+              var start = fmt(start);
+              var end = new Date(start);
+              end.setHours( end.getHours() + 1 );
+
+              document.getElementById("menuBlock2").style.display = "block"
+              document.getElementById("AddEventDate").value = start.substr(0,start.length - 6);
+              document.getElementById("AddEventTime").value = start.substr(11,start.length);
+
+              calendar.fullCalendar('renderEvent',
+                  {
+                    title: title,
+                    start: start,
+                    end: end,
+                    allDay: false,
+                    backgroundColor: 'red'                  },
+                  true // make the event "stick"
+              );
+            }
+            calendar.fullCalendar('unselect');
         },
 
-        editable: false,
         eventDrop: function (event, delta) {
           var start = fmt(event.start);
           var end = fmt(event.end);
-          $.ajax({
-            url: 'update_events.php',
-            data: 'title=' + event.title + '&start=' + start + '&end=' + end + '&id=' + event.id,
-            type: "POST",
-            success: function (json) {
-              //alert("Updated Successfully");
-            }
-          });
         },
         eventClick: function (event) {
           var decision = confirm("Do you want to remove event?");
           if (decision) {
-            $.ajax({
-              type: "POST",
-              url: "delete_event.php",
-              data: "&id=" + event.id,
-              success: function (json) {
-                $('#calendar').fullCalendar('removeEvents', event.id);
-                //alert("Updated Successfully");
-              }
-            });
-
-
           }
 
         },
         eventResize: function (event) {
           var start = fmt(event.start);
           var end = fmt(event.end);
-          $.ajax({
-            url: 'update_events.php',
-            data: 'title=' + event.title + '&start=' + start + '&end=' + end + '&id=' + event.id,
-            type: "POST",
-            success: function (json) {
-              alert("Updated Successfully");
-            }
-          });
+        },
 
+// ------------------- CUSTOM ---------------------- //
+
+        dayClick: function(date, jsEvent, view) {
+          $('#calendar').fullCalendar('changeView', 'agendaDay');
+          $("#calendar").fullCalendar('gotoDate', date.format());
         }
+// ------------------- CUSTOM END---------------------- //
 
       });
 
@@ -297,12 +280,13 @@ if($_GET['eventDate'])  // jezeli wybrany lekarz (w url)
 #right-menu {width: 25%; }
 
 #menuBlock {display: block; padding: 10pt; margin: 10px; background: #00857c;border-radius: 13px;}
+#menuBlock2 {display: block; padding: 10pt; margin: 10px; background: #00857c;border-radius: 13px; display: none}
 </style>
 
 <div id="container">
   <!-- -------------------------- left menu -------------------------- -->
     <div id="left-menu">
-      <div id="menuBlock">
+      <div id="menuBlock2">
       <p><b>Wypełnij formularz wizyty:</b></p><br>
       
       <form>
@@ -317,7 +301,7 @@ if($_GET['eventDate'])  // jezeli wybrany lekarz (w url)
         <br>Cel wizyty:<br>
         <input type="text" id="AddEventCel" name="eventCel" id="test1"><br><br>
         
-        <button type="submit">todo_Zarejestruj wizytę</button>
+        <button type="submit">Zarejestruj wizytę</button>
       </form>
 
       </div>
@@ -378,17 +362,12 @@ if($_GET['eventDate'])  // jezeli wybrany lekarz (w url)
 
 <head>  <!-- reklama CBA -->
 </head>
-
 <body style="background-color:#d8e5ff;">
-
-
 
 <script>
   $('#selected_doctor_id').text("ID lekarza: " + "<?php echo $DocID; ?>");
 </script>
 
 </body>
-
 <!-- ----------- Uklad glowny strony  END ----------------->
-
 </html>
