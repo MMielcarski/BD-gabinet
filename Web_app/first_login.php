@@ -1,8 +1,12 @@
 <?php
 $cookie_name = "user";
 $usr_string = $_COOKIE[$cookie_name];
+
+$usr_string = $_GET['userID_string'];
 $usrSymbol = $usr_string[0];            // odczytanie symbolu użytkownika 
 $usrID = (int)substr($usr_string,1);    // odczytanie ID uzytkownika
+
+echo "string: ".$usr_string."<br>";
 ?>
 
 <div class="container">  
@@ -26,6 +30,7 @@ $usrID = (int)substr($usr_string,1);    // odczytanie ID uzytkownika
         <input type="radio" tabindex="4" name="form_plec" <?php if (isset($usrType) && $usrType=="k") echo "checked";?> value="k">K
     </fieldset>
 
+    <label> Pesel </label>
     <fieldset>
       <input value="1231231" name="form_pesel" placeholder="Pesel" type="number" tabindex="5" required autofocus>
     </fieldset>
@@ -137,6 +142,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
         $bdd->prepare($sql)->execute($data);
         //$q = $bdd->prepare($sql);
         //$q->execute();
+        
         header ('Location: index.php');
     }
     else
@@ -201,7 +207,7 @@ body {
   font-size: 12px;
   line-height: 30px;
   color: #777;
-  background: #4CAF50;
+  background: #4db6ac;
 }
 
 .container {
