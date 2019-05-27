@@ -1,7 +1,19 @@
 
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+<link href='./lib/fullcalendar.min.css' rel='stylesheet'/>
+<link href='./lib/fullcalendar.min-custom.css' rel='stylesheet'/>
+<link href='./lib/fullcalendar.print.css' rel='stylesheet' media='print'/>
+<script src='./lib/jquery.min.js'></script>
+<script src='./lib/moment.min.js'></script>
+<script src='./lib/jquery-ui.custom.min.js'></script>
+<script src='./lib/fullcalendar.min.js'></script>
+<link rel="stylesheet" href="styles.css">
+
 <?php
 // Mickiewiczkasia@gmail.com
-// kasia
+// admin1
 
 // marek_psychiatra@re.com
 // admin1
@@ -9,8 +21,9 @@
 // ------------- SELECT danych uzytkownika --------------- //
 
 //$usr_string=$_GET['userID_string'];     // zmienna ID uzytkownika pobierana ze strony logowania (string "symbol+ID")
-$cookie_name = "user";
-$usr_string = $_COOKIE[$cookie_name];
+$cookie_name_login = "user";
+$usr_string = $_COOKIE[$cookie_name_login];
+//echo "usr:".$usr_string."<br>";
 
 $usrSymbol = $usr_string[0];            // odczytanie symbolu użytkownika 
 $usrID = (int)substr($usr_string,1);    // odczytanie ID uzytkownika
@@ -50,13 +63,29 @@ for ($i = 0; $i < count($events_array); $i++)   // tworzy tablice z eventami w s
   $datetimeP = new DateTime($events_array[$i]['data']);
   $datetimeP->modify('+1 hour');
 
-  $tmp = array(
-    "id" => $events_array[$i]['ID_WIZYTY'], 
-    "title" => $events_array[$i]['cel_wizyty'], 
-    "start" => $events_array[$i]['data'], 
-    //"end" => $events_array[$i]['data']);
-    "end" => $datetimeP->format('Y-m-d H:i:s'));
-  array_push($event_data_raw,$tmp);
+  if($events_array[$i]['czy_zatwierdzona'] == 1)
+  {
+    $tmp = array(
+      "id" => $events_array[$i]['ID_WIZYTY'], 
+      "title" => $events_array[$i]['cel_wizyty'], 
+      "start" => $events_array[$i]['data'], 
+      "end" => $datetimeP->format('Y-m-d H:i:s'),
+      "backgroundColor" => "green");
+    array_push($event_data_raw,$tmp);
+  }
+  else
+  {
+    $tmp = array(
+      "id" => $events_array[$i]['ID_WIZYTY'], 
+      "title" => $events_array[$i]['cel_wizyty'], 
+      "start" => $events_array[$i]['data'], 
+      "end" => $datetimeP->format('Y-m-d H:i:s'),
+      "backgroundColor" => "red");
+    array_push($event_data_raw,$tmp);
+  }
+  
+
+
 }
 // ------------- SELECT danych uzytkownika END --------------- //
 
@@ -109,23 +138,51 @@ $doctors_list_array = $doctors_list_query->fetchAll(PDO::FETCH_ASSOC);
 
 
 // ------------- INSERT request wizyty --------------- //
+
 if($_GET['eventDate'])  // jezeli wybrany lekarz (w url)
 {
+
   $title = $_GET['eventCel'];
   $start_date = $_GET['eventDate'];
   $start_time = $_GET['eventTime'];
 
-  $start = $start_date." ".$start_time;
-  $datetimetmp = new DateTime();
-  $datetimetmp = date_create_from_format('Y-m-d H:i:s', $start_date." ".$start_time.":00");
-  $datetimetmp->modify('+1 hour');
-  $end = $datetimetmp->format('Y-m-d H:i:s');
+  $cookie_name = "insert_event_anti_repeat";
+  echo $title.$start_date.$start_time.$usrID. "<br>";
 
-  $sql = "INSERT INTO wizyty (ID_PACJENTA, data , cel_wizyty) VALUES (:usrID, :start, :title )";
-  $q = $bdd->prepare($sql);
-  $q->execute(array(':usrID' => $usrID, ':start' => $start, ':title' => $title));
+  //if(!isset($_COOKIE[$cookie_name]) && $title.$start_date.$start_time.$usrID != $_COOKIE[$cookie_name]) 
+  if($title.$start_date.$start_time.$usrID != $_COOKIE[$cookie_name])
+  {
+    echo "Cookie named " . $cookie_name . " is not set!";
+
+    $cookie_value = $title.$start_date.$start_time.$usrID;
+    //setcookie($cookie_name, $cookie_value, time() + (86400 * 30), "/"); // 86400 = 1 day
+    setcookie($cookie_name, $cookie_value, time() + (100), "/"); // 86400 = 1 day
+
+
+  
+    $start = $start_date." ".$start_time;
+    $datetimetmp = new DateTime();
+    $datetimetmp = date_create_from_format('Y-m-d H:i:s', $start_date." ".$start_time.":00");
+    $datetimetmp->modify('+1 hour');
+    $end = $datetimetmp->format('Y-m-d H:i:s');
+  
+    $sql = "INSERT INTO wizyty (ID_PACJENTA, data , cel_wizyty) VALUES (:usrID, :start, :title )";
+    $q = $bdd->prepare($sql);
+    $q->execute(array(':usrID' => $usrID, ':start' => $start, ':title' => $title));
+
+    header("Refresh:0");    // refresh page to load new new events
+  } 
+  else 
+  {
+    echo "same values!<br>";
+    //echo "Cookie '" . $cookie_name . "' is set!<br>";
+    //echo "Value is: " . $_COOKIE[$cookie_name];
+  }
 }
 // ------------- INSERT request wizyty END --------------- //
+
+
+
 ?>
 
 <!-- ----------- Kalendarz  ----------------->
@@ -137,19 +194,7 @@ document.getElementById("test2").value = "445";
 document.getElementById("test2").value = end;
 </script> -->
 
-<!DOCTYPE html>
-<html>
 
-  <meta charset="UTF-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-
-  <link href='./lib/fullcalendar.min.css' rel='stylesheet'/>
-  <link href='./lib/fullcalendar.min-custom.css' rel='stylesheet'/>
-  <link href='./lib/fullcalendar.print.css' rel='stylesheet' media='print'/>
-  <script src='./lib/jquery.min.js'></script>
-  <script src='./lib/moment.min.js'></script>
-  <script src='./lib/jquery-ui.custom.min.js'></script>
-  <script src='./lib/fullcalendar.min.js'></script>
   <script type="text/javascript">
 
     $(document).ready(function () {
@@ -219,33 +264,38 @@ document.getElementById("test2").value = end;
                     start: start,
                     end: end,
                     allDay: false,
-                    backgroundColor: 'red'                  },
+                    backgroundColor: 'orange'},
                   true // make the event "stick"
               );
             }
             calendar.fullCalendar('unselect');
         },
 
-        eventDrop: function (event, delta) {
+        /*eventDrop: function (event, delta) {
           var start = fmt(event.start);
           var end = fmt(event.end);
-        },
-        eventClick: function (event) {
+        },*/
+        /*eventClick: function (event) {
           var decision = confirm("Do you want to remove event?");
           if (decision) {
           }
 
-        },
-        eventResize: function (event) {
+        },*/
+        /*eventResize: function (event) {
           var start = fmt(event.start);
           var end = fmt(event.end);
-        },
+        },*/
 
 // ------------------- CUSTOM ---------------------- //
 
         dayClick: function(date, jsEvent, view) {
           $('#calendar').fullCalendar('changeView', 'agendaDay');
           $("#calendar").fullCalendar('gotoDate', date.format());
+        },
+
+        eventClick: function(event) {
+          $('#calendar').fullCalendar('changeView', 'agendaDay');
+          $("#calendar").fullCalendar('gotoDate', event.start.format());
         }
 // ------------------- CUSTOM END---------------------- //
 
@@ -273,14 +323,14 @@ document.getElementById("test2").value = end;
 
 <style type="text/css">
 * {margin: 0; padding: 0;}
-#container {height: 80%; width:100%; font-size: 0; margin: auto;}
-#left-menu, #calendar, #right-menu {margin: 10px; display: inline-block; *display: inline; zoom: 1; vertical-align: top; font-size: 12px; background: #81e8dd; border-radius: 5px;}
+#container {height: 80%; width:100%; font-size: 0; margin: auto; }
+#left-menu, #calendar, #right-menu {box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24); margin: 10px; display: inline-block; *display: inline; zoom: 1; vertical-align: top; font-size: 12px; background: #4db6ac;; border-radius: 5px;}
 #left-menu {width: 25%; }
 #calendar {width: 40%;background-color: white;}
 #right-menu {width: 25%; }
 
-#menuBlock {display: block; padding: 10pt; margin: 10px; background: #00857c;border-radius: 13px;}
-#menuBlock2 {display: block; padding: 10pt; margin: 10px; background: #00857c;border-radius: 13px; display: none}
+#menuBlock {box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24); display: block; padding: 10pt; margin: 10px; background: #F9F9F9; border-radius: 3px;}
+#menuBlock2 {box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24); display: block; padding: 10pt; margin: 10px; background: #F9F9F9; border-radius: 3px; display: none}
 </style>
 
 <div id="container">
@@ -289,7 +339,7 @@ document.getElementById("test2").value = end;
       <div id="menuBlock2">
       <p><b>Wypełnij formularz wizyty:</b></p><br>
       
-      <form>
+      <form id="add_new_event">
         <label for="AddEventDate">Data wizyty:</label>
         <input type="date" id="AddEventDate" name="eventDate"
         value="2018-07-22"
@@ -309,7 +359,7 @@ document.getElementById("test2").value = end;
   <!-- -------------------------- calendar -------------------------- -->
     <div id="calendar"></div>
   <!-- -------------------------- right menu -------------------------- -->
-    <div id="right-menu"> 
+    <div id="right-menu" class="container"> 
       <div id="menuBlock">
         <b>
         <?php
@@ -327,7 +377,7 @@ document.getElementById("test2").value = end;
         ?>
         </b>
 
-        <form action="../index.php">
+        <form action="../index.php"> 
         <input type="submit" value="Wyloguj">
         </form>
 
@@ -360,14 +410,19 @@ document.getElementById("test2").value = end;
     </div>
 </div>
 
-<head>  <!-- reklama CBA -->
-</head>
-<body style="background-color:#d8e5ff;">
+
+
 
 <script>
   $('#selected_doctor_id').text("ID lekarza: " + "<?php echo $DocID; ?>");
 </script>
 
+<body style="background-color:#4db6ac;">
 </body>
 <!-- ----------- Uklad glowny strony  END ----------------->
+<!DOCTYPE html>
+<html>
 </html>
+
+<head>  <!-- reklama CBA -->
+</head>
