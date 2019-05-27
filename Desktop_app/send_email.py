@@ -9,6 +9,8 @@ password = haslo.haslo()
 #reciever = whu you are sending the message to
 #passwd - generated password for new user
 def send_first_time_email(reciever, passwd):
+    print(reciever)
+    print(passwd)
     subject = "Witamy w serwisie dbgabinet!"
     messageHTML = '<p>Dziękujemy za rejestrację'+\
                   '<p> Wejdź na <a href="http://dbgabinet.cba.pl/"> www.dbgabinet.cba.pl<a> aby zarejestrować się do wybranego lekarza.'+\
@@ -21,7 +23,7 @@ def send_first_time_email(reciever, passwd):
     msg['Subject'] = subject
 
     msg.attach(MIMEText(messageHTML, 'html'))
-    msg.attach(MIMEText(messagePlain, 'plain'))
+   # msg.attach(MIMEText(messagePlain, 'plain'))
 
     server = smtplib.SMTP('smtp.gmail.com', 587) # Connect to the server
     server.starttls() # Use TLS
@@ -29,13 +31,14 @@ def send_first_time_email(reciever, passwd):
     text = msg.as_string()
     server.sendmail(my_email, reciever ,text) # Send the email
     server.quit() # Logout of the email server
+    print("Email sent")
 
 
 
-def send_confirm_email(reciever, doctor, date, hour):
+def send_confirm_email(reciever, doctor, date):
     subject = "Potwierdzenie wizyty"
     messageHTML = '<p>Twoja wizyta do' + doctor + ' została potwierdzona!' + \
-                  '<p> Data: ' + date  + '  Godzina:'+ hour + \
+                  '<p> Data i godzina: ' + date  + \
                   '<p><p><p> Zespół bdgabinet'
 
     msg = MIMEMultipart()
@@ -52,7 +55,7 @@ def send_confirm_email(reciever, doctor, date, hour):
     text = msg.as_string()
     server.sendmail(my_email, reciever, text)  # Send the email
     server.quit()  # Logout of the email server
-
+    print("Email sent")
 
 def send_reject_email(reciever, doctor, date, hour):
     subject = "Odrzucenie wizyty"
@@ -74,6 +77,7 @@ def send_reject_email(reciever, doctor, date, hour):
     text = msg.as_string()
     server.sendmail(my_email, reciever, text)  # Send the email
     server.quit()  # Logout of the email server
+    print("Email sent")
 
 def send_cancel_email(reciever, doctor, date, hour):
     subject = "Anulowanie wizyty"
@@ -95,9 +99,9 @@ def send_cancel_email(reciever, doctor, date, hour):
     text = msg.as_string()
     server.sendmail(my_email, reciever, text)  # Send the email
     server.quit()  # Logout of the email server
+    print("Email sent")
 
-
-# send_first_time_email('dbgabinet@gmail.com', 'abc')
-# send_confirm_email('bdgabinet@gmail.com', 'Arkadiusz Mróz', '20-01-2019r.', '19:00')
+# send_first_time_email("dbgabinet@gmail.com", "abc")
+# send_confirm_email('bdgabinet@gmail.com', 'Arkadiusz Mróz', '20-01-2019r. 19:00')
 # send_reject_email('bdgabinet@gmail.com', 'Arkadiusz Mróz', '20-01-2019r.', '19:00')
 # send_cancel_email('bdgabinet@gmail.com', 'Arkadiusz Mróz', '20-01-2019r.', '19:00')
