@@ -57,9 +57,9 @@ def send_confirm_email(reciever, doctor, date):
     server.quit()  # Logout of the email server
     print("Email sent")
 
-def send_reject_email(reciever, doctor, date, hour):
+def send_reject_email(reciever, doctor, date):
     subject = "Odrzucenie wizyty"
-    messageHTML = '<p> Twoja wizyta do ' + doctor + ' na dzień ' + date + ' '+ hour + ' została odrzucona!' + \
+    messageHTML = '<p> Twoja wizyta do ' + doctor + ' na dzień ' + date + ' została odrzucona!' + \
                   '<p> Wejdź na <a href="http://dbgabinet.cba.pl/"> www.dbgabinet.cba.pl<a> aby ponownie zarejestrować się do wybranego lekarza.' + \
                   '<p><p><p> Zespół bdgabinet'
 
@@ -103,5 +103,5 @@ def send_cancel_email(reciever, doctor, date, hour):
 
 # send_first_time_email("dbgabinet@gmail.com", "abc")
 # send_confirm_email('bdgabinet@gmail.com', 'Arkadiusz Mróz', '20-01-2019r. 19:00')
-# send_reject_email('bdgabinet@gmail.com', 'Arkadiusz Mróz', '20-01-2019r.', '19:00')
+# send_reject_email('bdgabinet@gmail.com', 'Arkadiusz Mróz', '20-01-2019r. 19:00')
 # send_cancel_email('bdgabinet@gmail.com', 'Arkadiusz Mróz', '20-01-2019r.', '19:00')
